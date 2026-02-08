@@ -1421,7 +1421,7 @@ const REFILL_ANIMAL_MARKET = (currentMarket, currentDeck) => {
 // COMPONENTS
 // ---------------------------------------------------------------------------
 
-const TokenStackVisual = ({ tokens, scale = 1, spacing = 8 }) => (
+const TokenStackVisual = ({ tokens, scale = 1.2, spacing = 8 }) => (
   <div
     className="relative w-8 h-12 mx-auto"
     style={{
@@ -1445,42 +1445,39 @@ const TokenStackVisual = ({ tokens, scale = 1, spacing = 8 }) => (
   </div>
 );
 
-// REPLACE YOUR PatternPreview COMPONENT WITH THIS
-
 const PatternPreview = ({ visual }) => {
   if (!visual) return null;
 
   // 1. Vertical Stack Preview
   if (visual.type === "stack") {
-    return <TokenStackVisual tokens={visual.tokens} spacing={5} />;
+    return <TokenStackVisual tokens={visual.tokens} spacing={8} />;
   }
 
   // 2. Adjacency Preview (Cluster)
   if (visual.type === "adj") {
     return (
-      // CHANGED: Removed 'py-2' to save vertical space
-      <div className="flex items-end justify-center gap-2">
+      <div className="flex -mt-3 items-center justify-center gap-2">
         {/* Main Center Token */}
-        <div className="relative z-10 border-2 border-white/50 rounded-xl p-1 bg-black/20">
+        <div className="relative z-10 rounded-xl p-1">
           <TokenStackVisual
             tokens={Array.isArray(visual.main) ? visual.main : [visual.main]}
-            scale={0.9}
-            spacing={5} // CHANGED: Tighter spacing
+            scale={1.2}
+            spacing={8}
           />
           {/* Center Indicator Dot */}
-          <div className="absolute -top-2 -right-2 w-3 h-3 bg-white rounded-full flex items-center justify-center border border-slate-500 shadow">
+          <div className="absolute -top-2 w-3 h-3 bg-white rounded-full flex items-center justify-center border border-slate-500 shadow">
             <div className="w-1 h-1 bg-slate-900 rounded-full"></div>
           </div>
         </div>
 
         {/* Neighbors */}
-        <div className="flex flex-col gap-1">
+        <div className="flex items-center flex-col gap-2">
           {visual.others.map((tArr, i) => (
-            <div key={i} className="opacity-80 scale-75 origin-bottom">
+            <div key={i} className="origin-bottom">
               <TokenStackVisual
                 tokens={Array.isArray(tArr) ? tArr : [tArr]}
-                scale={0.8}
-                spacing={5} // CHANGED: Tighter spacing
+                scale={1.2}
+                spacing={8}
               />
             </div>
           ))}
@@ -1492,29 +1489,22 @@ const PatternPreview = ({ visual }) => {
   // 3. Linear Preview
   if (visual.type === "line") {
     return (
-      // CHANGED: 'py-2' to 'py-4'
-      <div className="flex items-center justify-center gap-1 py-4">
+      <div className="flex -mt-3 items-center justify-center gap-1 py-4">
         {visual.sequence.map((tokens, i) => (
           <React.Fragment key={i}>
-            {i > 0 && (
-              <div className="text-slate-500 opacity-50">
-                <SkipForward size={10} />
-              </div>
-            )}
-
             <div
-              className={`relative ${i === 0 ? "z-10 scale-100" : "opacity-80 scale-90"}`}
+              className={`relative ${i === 0 ? "z-10 scale-100" : "scale-100"}`}
             >
               {i === 0 && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full flex items-center justify-center border border-slate-500 shadow z-20">
+                <div className="absolute center -top-2 w-3 h-3 bg-white rounded-full flex items-center justify-center border border-slate-500 shadow z-20">
                   <div className="w-1 h-1 bg-slate-900 rounded-full"></div>
                 </div>
               )}
 
               <TokenStackVisual
                 tokens={Array.isArray(tokens) ? tokens : [tokens]}
-                scale={0.7}
-                spacing={5} // CHANGED: Tighter spacing
+                scale={1.2}
+                spacing={8}
               />
             </div>
           </React.Fragment>
