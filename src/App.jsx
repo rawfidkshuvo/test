@@ -71,6 +71,21 @@ import {
   Flame, // Fox
   Flower, // Bee
   Vegan,
+  Stone,
+  Cylinder,
+  Cuboid,
+  Grip,
+  Droplet,
+  Sprout,
+  Squirrel,
+  Turtle,
+  PiggyBank,
+  Worm,
+  ChessBishop,
+  ChessKnight,
+  Cone,
+  Panda,
+  Origami,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -123,26 +138,47 @@ const GlobalStyles = () => (
   `}</style>
 );
 
-const FloatingBackground = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black" />
-    <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-    <div className="absolute top-0 left-0 w-full h-full opacity-5">
-      {[...Array(15)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute animate-float text-emerald-500"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDuration: `${20 + Math.random() * 20}s`,
-            transform: `scale(${0.5 + Math.random()})`,
-          }}
-        >
-          <Hexagon size={48} />
-        </div>
-      ))}
+const FloatingBackground = ({ isShaking }) => (
+  <div
+    className={`absolute inset-0 overflow-hidden pointer-events-none z-0 ${
+      isShaking ? "animate-shake bg-red-900/20" : ""
+    }`}
+  >
+    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-yellow-900/20 via-gray-950 to-black" />
+    <div className="absolute top-0 left-0 w-full h-full opacity-10">
+      {[...Array(20)].map((_, i) => {
+        const fruitKeys = Object.keys(TOKEN_TYPES);
+        const Icon = TOKEN_TYPES[fruitKeys[i % fruitKeys.length]].icon;
+        return (
+          <div
+            key={i}
+            className="absolute animate-float text-white/60"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDuration: `${10 + Math.random() * 20}s`,
+              transform: `scale(${0.5 + Math.random()})`,
+            }}
+          >
+            <Icon size={32} />
+          </div>
+        );
+      })}
     </div>
+    <style>{`
+      @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+      }
+      .animate-float { animation: float infinite ease-in-out; }
+      
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+      }
+      .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    `}</style>
   </div>
 );
 
@@ -155,7 +191,7 @@ const TOKEN_TYPES = {
     id: "WOOD",
     color: "bg-amber-800",
     border: "border-amber-950",
-    icon: MoreHorizontal,
+    icon: Cylinder,
     name: "Log",
     validOn: ["EMPTY", "WOOD"],
     scoreType: "TREE",
@@ -173,7 +209,7 @@ const TOKEN_TYPES = {
     id: "STONE",
     color: "bg-slate-400",
     border: "border-slate-600",
-    icon: Mountain,
+    icon: Stone,
     name: "Stone",
     validOn: ["EMPTY", "STONE"],
     scoreType: "MOUNTAIN",
@@ -182,7 +218,7 @@ const TOKEN_TYPES = {
     id: "WATER",
     color: "bg-cyan-500",
     border: "border-cyan-700",
-    icon: Waves,
+    icon: Droplet,
     name: "Water",
     validOn: ["EMPTY"],
     scoreType: "RIVER",
@@ -191,7 +227,7 @@ const TOKEN_TYPES = {
     id: "SAND",
     color: "bg-yellow-400",
     border: "border-yellow-600",
-    icon: Vegan,
+    icon: Sprout,
     name: "Sand",
     validOn: ["EMPTY"],
     scoreType: "FIELD",
@@ -200,7 +236,7 @@ const TOKEN_TYPES = {
     id: "BRICK",
     color: "bg-red-700",
     border: "border-red-900",
-    icon: Home,
+    icon: Cuboid,
     name: "Brick",
     // CHANGED: Now valid on Empty (for base), Brick, Stone, or Wood
     validOn: ["EMPTY", "BRICK", "STONE", "WOOD"],
@@ -264,6 +300,13 @@ const checkLine = (board, q, r, predicates) => {
   });
 };
 
+// HELPER: Gets the visible token type (Top of stack)
+// Returns null if empty.
+const getTop = (cell) => {
+  if (!cell || cell.stack.length === 0) return null;
+  return cell.stack[cell.stack.length - 1];
+};
+
 const ANIMALS = {
   // --- TIER 1: SIMPLE STACKS & ADJACENCY (Easy) ---
 
@@ -271,11 +314,12 @@ const ANIMALS = {
     id: "SQUIRREL",
     name: "Squirrel",
     desc: "Small Tree (1 Log + Leaf)",
-    points: [2, 2, 3],
+    points: [2, 2, 2],
     slots: 3,
-    icon: Nut,
+    icon: Squirrel,
     iconColor: "text-orange-500",
     visual: { type: "stack", tokens: ["WOOD", "LEAF"] },
+    // Full Proof: Exact stack match required.
     check: (cell) => checkStack(cell, ["WOOD", "LEAF"]),
   },
   LIZARD: {
@@ -287,6 +331,7 @@ const ANIMALS = {
     icon: Rat,
     iconColor: "text-emerald-400",
     visual: { type: "adj", main: ["STONE"], others: [["LEAF"]] },
+    // Full Proof: Exact stack matches required.
     check: (cell, board) =>
       checkStack(cell, ["STONE"]) &&
       checkAnyNeighbor(board, cell.q, cell.r, (n) => checkStack(n, ["LEAF"])),
@@ -300,9 +345,10 @@ const ANIMALS = {
     icon: Snail,
     iconColor: "text-lime-300",
     visual: { type: "adj", main: ["STONE"], others: [["WATER"]] },
+    // Full Proof: Exact Stone stack, neighbor must have Water on TOP.
     check: (cell, board) =>
       checkStack(cell, ["STONE"]) &&
-      checkAnyNeighbor(board, cell.q, cell.r, (n) => n.stack[0] === "WATER"),
+      checkAnyNeighbor(board, cell.q, cell.r, (n) => getTop(n) === "WATER"),
   },
   HERON: {
     id: "HERON",
@@ -314,7 +360,7 @@ const ANIMALS = {
     iconColor: "text-cyan-300",
     visual: { type: "adj", main: ["WATER"], others: [["LEAF"]] },
     check: (cell, board) =>
-      cell.stack[0] === "WATER" &&
+      getTop(cell) === "WATER" &&
       checkAnyNeighbor(board, cell.q, cell.r, (n) => checkStack(n, ["LEAF"])),
   },
   DUCK: {
@@ -323,11 +369,11 @@ const ANIMALS = {
     desc: "Water next to Wood (Log)",
     points: [2, 2, 2],
     slots: 3,
-    icon: Bird,
+    icon: Origami,
     iconColor: "text-green-600",
     visual: { type: "adj", main: ["WATER"], others: [["WOOD"]] },
     check: (cell, board) =>
-      cell.stack[0] === "WATER" &&
+      getTop(cell) === "WATER" &&
       checkAnyNeighbor(board, cell.q, cell.r, (n) => checkStack(n, ["WOOD"])),
   },
   HAWK: {
@@ -336,7 +382,7 @@ const ANIMALS = {
     desc: "Dead Tree (3 Logs)",
     points: [3, 4],
     slots: 2,
-    icon: Feather,
+    icon: Bird,
     iconColor: "text-red-700",
     visual: { type: "stack", tokens: ["WOOD", "WOOD", "WOOD"] },
     check: (cell) => checkStack(cell, ["WOOD", "WOOD", "WOOD"]),
@@ -366,15 +412,15 @@ const ANIMALS = {
     visual: { type: "adj", main: ["LEAF"], others: [["WATER"]] },
     check: (cell, board) =>
       checkStack(cell, ["LEAF"]) &&
-      checkAnyNeighbor(board, cell.q, cell.r, (n) => n.stack[0] === "WATER"),
+      checkAnyNeighbor(board, cell.q, cell.r, (n) => getTop(n) === "WATER"),
   },
   BEAVER: {
     id: "BEAVER",
     name: "Beaver",
-    desc: "Log next to Water AND Tree", // Changed to avoid Duck conflict
-    points: [3, 3, 4], // Buffed slightly due to extra requirement
-    slots: 3,
-    icon: Hammer,
+    desc: "Log next to Water AND Tree",
+    points: [4, 5],
+    slots: 2,
+    icon: Rat,
     iconColor: "text-amber-800",
     visual: {
       type: "adj",
@@ -386,7 +432,7 @@ const ANIMALS = {
       const neighbors = getNeighbors(cell.q, cell.r).map(
         (n) => board[`${n.q},${n.r}`],
       );
-      const hasWater = neighbors.some((n) => n && n.stack[0] === "WATER");
+      const hasWater = neighbors.some((n) => getTop(n) === "WATER");
       const hasTree = neighbors.some(
         (n) => n && checkStack(n, ["WOOD", "LEAF"]),
       );
@@ -399,17 +445,58 @@ const ANIMALS = {
     desc: "Water next to Field AND Stone",
     points: [3, 3],
     slots: 2,
-    icon: Shell,
+    icon: Turtle,
     iconColor: "text-teal-600",
     visual: { type: "adj", main: ["WATER"], others: [["SAND"], ["STONE"]] },
+    // FIXED: Now checks getTop to prevent buildings counting as stone/sand
     check: (cell, board) => {
-      if (cell.stack[0] !== "WATER") return false;
+      if (getTop(cell) !== "WATER") return false;
       const neighbors = getNeighbors(cell.q, cell.r).map(
         (n) => board[`${n.q},${n.r}`],
       );
       return (
-        neighbors.some((n) => n?.stack[0] === "SAND") &&
-        neighbors.some((n) => n?.stack[0] === "STONE")
+        neighbors.some((n) => getTop(n) === "SAND") &&
+        neighbors.some((n) => getTop(n) === "STONE")
+      );
+    },
+  },
+  HEDGEHOG: {
+    id: "HEDGEHOG",
+    name: "Hedgehog",
+    desc: "Field next to Wood(1 Log) AND Bush(1 Leaf)",
+    points: [3, 4],
+    slots: 2,
+    icon: Rabbit,
+    iconColor: "text-blue-600",
+    visual: { type: "adj", main: ["SAND"], others: [["LEAF"], ["WOOD"]] },
+    check: (cell, board) => {
+      if (getTop(cell) !== "SAND") return false;
+      const neighbors = getNeighbors(cell.q, cell.r).map(
+        (n) => board[`${n.q},${n.r}`],
+      );
+      return (
+        neighbors.some((n) => n && checkStack(n, ["LEAF"])) &&
+        neighbors.some((n) => n && checkStack(n, ["WOOD"]))
+      );
+    },
+  },
+  SHELL: {
+    id: "SHELL",
+    name: "Shell",
+    desc: "Sand next to Water AND Stone",
+    points: [3, 3],
+    slots: 2,
+    icon: Shell,
+    iconColor: "text-red-600",
+    visual: { type: "adj", main: ["SAND"], others: [["WATER"], ["STONE"]] },
+    check: (cell, board) => {
+      if (getTop(cell) !== "SAND") return false;
+      const neighbors = getNeighbors(cell.q, cell.r).map(
+        (n) => board[`${n.q},${n.r}`],
+      );
+      return (
+        neighbors.some((n) => getTop(n) === "WATER") &&
+        neighbors.some((n) => getTop(n) === "STONE")
       );
     },
   },
@@ -417,22 +504,22 @@ const ANIMALS = {
     id: "BOAR",
     name: "Boar",
     desc: "Field next to Water AND Tree",
-    points: [3, 3, 3],
+    points: [4, 4, 5],
     slots: 3,
-    icon: Rat,
-    iconColor: "text-stone-600",
+    icon: PiggyBank,
+    iconColor: "text-amber-900",
     visual: {
       type: "adj",
       main: ["SAND"],
       others: [["WATER"], ["WOOD", "LEAF"]],
     },
     check: (cell, board) => {
-      if (cell.stack[0] !== "SAND") return false;
+      if (getTop(cell) !== "SAND") return false;
       const neighbors = getNeighbors(cell.q, cell.r).map(
         (n) => board[`${n.q},${n.r}`],
       );
       return (
-        neighbors.some((n) => n?.stack[0] === "WATER") &&
+        neighbors.some((n) => getTop(n) === "WATER") &&
         neighbors.some((n) => n && checkStack(n, ["WOOD", "LEAF"]))
       );
     },
@@ -441,7 +528,7 @@ const ANIMALS = {
     id: "ANTS",
     name: "Ants",
     desc: "Field next to Bush(1 Leaf) AND Tree",
-    points: [3, 3, 3],
+    points: [4, 4, 5],
     slots: 3,
     icon: Bug,
     iconColor: "text-amber-600",
@@ -451,12 +538,12 @@ const ANIMALS = {
       others: [["LEAF"], ["WOOD", "LEAF"]],
     },
     check: (cell, board) => {
-      if (cell.stack[0] !== "SAND") return false;
+      if (getTop(cell) !== "SAND") return false;
       const neighbors = getNeighbors(cell.q, cell.r).map(
         (n) => board[`${n.q},${n.r}`],
       );
       return (
-        neighbors.some((n) => n?.stack[0] === "LEAF") &&
+        neighbors.some((n) => n && checkStack(n, ["LEAF"])) &&
         neighbors.some((n) => n && checkStack(n, ["WOOD", "LEAF"]))
       );
     },
@@ -465,9 +552,9 @@ const ANIMALS = {
     id: "FOX",
     name: "Fox",
     desc: "Medium Rock (2 Stone) next to Medium Wood (2 Log)",
-    points: [3, 4],
+    points: [4, 5],
     slots: 2,
-    icon: Flame,
+    icon: Cat,
     iconColor: "text-orange-600",
     visual: {
       type: "adj",
@@ -484,35 +571,40 @@ const ANIMALS = {
     id: "DEER",
     name: "Deer",
     desc: "Tall Tree (2 Log+Leaf) next to Field",
-    points: [3, 3, 4],
+    points: [4, 5, 5],
     slots: 3,
-    icon: Footprints,
+    icon: Dog,
     iconColor: "text-amber-600",
-    visual: { type: "adj", main: ["WOOD", "WOOD", "LEAF"], others: [["SAND"]] },
+    visual: {
+      type: "adj",
+      main: ["WOOD", "WOOD", "LEAF"],
+      others: [["SAND"]],
+    },
     check: (cell, board) =>
       checkStack(cell, ["WOOD", "WOOD", "LEAF"]) &&
-      checkAnyNeighbor(board, cell.q, cell.r, (n) => n.stack[0] === "SAND"),
+      checkAnyNeighbor(board, cell.q, cell.r, (n) => getTop(n) === "SAND"),
   },
   BEAR: {
     id: "BEAR",
     name: "Bear",
     desc: "Tall Tree (2 Log+Leaf) next to Mountain (2+ Stone)",
-    points: [5, 5],
+    points: [5, 6],
     slots: 2,
-    icon: PawPrint,
+    icon: Panda,
     iconColor: "text-amber-800",
     visual: {
       type: "adj",
       main: ["WOOD", "WOOD", "LEAF"],
       others: [["STONE", "STONE"]],
     },
+    // FIXED: Checks length AND ensures top is Stone (not brick)
     check: (cell, board) =>
       checkStack(cell, ["WOOD", "WOOD", "LEAF"]) &&
       checkAnyNeighbor(
         board,
         cell.q,
         cell.r,
-        (n) => n.stack.length >= 2 && n.stack[0] === "STONE",
+        (n) => n && n.stack.length >= 2 && getTop(n) === "STONE",
       ),
   },
   PANDA: {
@@ -521,8 +613,8 @@ const ANIMALS = {
     desc: "Tall Tree (2 Log+Leaf) next to Water",
     points: [5, 5],
     slots: 2,
-    icon: PawPrint,
-    iconColor: "text-white-900",
+    icon: Panda,
+    iconColor: "text-red-300",
     visual: {
       type: "adj",
       main: ["WOOD", "WOOD", "LEAF"],
@@ -530,7 +622,7 @@ const ANIMALS = {
     },
     check: (cell, board) =>
       checkStack(cell, ["WOOD", "WOOD", "LEAF"]) &&
-      checkAnyNeighbor(board, cell.q, cell.r, (n) => n.stack[0] === "WATER"),
+      checkAnyNeighbor(board, cell.q, cell.r, (n) => getTop(n) === "WATER"),
   },
   SCORPION: {
     id: "SCORPION",
@@ -538,12 +630,12 @@ const ANIMALS = {
     desc: "Medium Rock (2 Stone) next to Field",
     points: [3, 3, 3],
     slots: 3,
-    icon: Bug,
+    icon: Snail,
     iconColor: "text-rose-600",
     visual: { type: "adj", main: ["STONE", "STONE"], others: [["SAND"]] },
     check: (cell, board) =>
       checkStack(cell, ["STONE", "STONE"]) &&
-      checkAnyNeighbor(board, cell.q, cell.r, (n) => n.stack[0] === "SAND"),
+      checkAnyNeighbor(board, cell.q, cell.r, (n) => getTop(n) === "SAND"),
   },
 
   // --- TIER 3: CLUSTERS & SURROUNDED (Hard) ---
@@ -552,7 +644,7 @@ const ANIMALS = {
     id: "BEE",
     name: "Bee",
     desc: "Bush (Leaf) next to 2 other Bushes",
-    points: [2, 2, 3],
+    points: [2, 3, 3],
     slots: 3,
     icon: Flower,
     iconColor: "text-yellow-400",
@@ -571,10 +663,10 @@ const ANIMALS = {
     id: "WOLF",
     name: "Wolf",
     desc: "Tree (1 Log+Leaf) next to 2 other Trees",
-    points: [4, 5],
+    points: [6, 7],
     slots: 2,
     icon: Moon,
-    iconColor: "text-slate-500",
+    iconColor: "text-orange-500",
     visual: {
       type: "adj",
       main: ["WOOD", "LEAF"],
@@ -597,16 +689,16 @@ const ANIMALS = {
     id: "SALMON",
     name: "Salmon",
     desc: "Water next to 2 other Water tiles",
-    points: [2, 2, 3],
+    points: [3, 3, 3],
     slots: 3,
     icon: Fish,
     iconColor: "text-rose-400",
     visual: { type: "adj", main: ["WATER"], others: [["WATER"], ["WATER"]] },
     check: (cell, board) => {
-      if (cell.stack[0] !== "WATER") return false;
+      if (getTop(cell) !== "WATER") return false;
       let waters = 0;
       getNeighbors(cell.q, cell.r).forEach((n) => {
-        if (board[`${n.q},${n.r}`]?.stack[0] === "WATER") waters++;
+        if (getTop(board[`${n.q},${n.r}`]) === "WATER") waters++;
       });
       return waters >= 2;
     },
@@ -615,13 +707,13 @@ const ANIMALS = {
     id: "RABBIT",
     name: "Rabbit",
     desc: "Field next to 2 Bushes",
-    points: [3, 3, 4, 4],
+    points: [3, 4, 4, 4],
     slots: 4,
     icon: Rabbit,
-    iconColor: "text-stone-300",
+    iconColor: "text-fuchsia-300",
     visual: { type: "adj", main: ["SAND"], others: [["LEAF"], ["LEAF"]] },
     check: (cell, board) => {
-      if (cell.stack[0] !== "SAND") return false;
+      if (getTop(cell) !== "SAND") return false;
       let bushes = 0;
       getNeighbors(cell.q, cell.r).forEach((n) => {
         const neighbor = board[`${n.q},${n.r}`];
@@ -640,11 +732,12 @@ const ANIMALS = {
     iconColor: "text-cyan-300",
     visual: { type: "adj", main: ["STONE"], others: [["WATER"], ["WATER"]] },
     check: (cell, board) => {
-      if (cell.stack[0] !== "STONE") return false;
+      // FIXED: Ensure Main is Top Stone
+      if (getTop(cell) !== "STONE") return false;
       let waters = 0;
       getNeighbors(cell.q, cell.r).forEach((n) => {
         const neighbor = board[`${n.q},${n.r}`];
-        if (neighbor && checkStack(neighbor, ["WATER"])) waters++;
+        if (getTop(neighbor) === "WATER") waters++;
       });
       return waters >= 2;
     },
@@ -659,13 +752,13 @@ const ANIMALS = {
     iconColor: "text-amber-700",
     visual: { type: "adj", main: ["STONE"], others: [["SAND"], ["SAND"]] },
     check: (cell, board) => {
-      if (cell.stack[0] !== "STONE") return false;
-      let bushes = 0;
+      if (getTop(cell) !== "STONE") return false;
+      let fields = 0;
       getNeighbors(cell.q, cell.r).forEach((n) => {
         const neighbor = board[`${n.q},${n.r}`];
-        if (neighbor && checkStack(neighbor, ["SAND"])) bushes++;
+        if (getTop(neighbor) === "SAND") fields++;
       });
-      return bushes >= 2;
+      return fields >= 2;
     },
   },
 
@@ -675,23 +768,23 @@ const ANIMALS = {
     id: "BAT",
     name: "Bat",
     desc: "Building next to Water",
-    points: [3, 3, 3],
+    points: [4, 4, 5],
     slots: 3,
     icon: Ghost,
     iconColor: "text-violet-400",
     visual: { type: "adj", main: ["BRICK", "BRICK"], others: [["WATER"]] },
     check: (cell, board) =>
       isBuilding(cell) &&
-      checkAnyNeighbor(board, cell.q, cell.r, (n) => n.stack[0] === "WATER"),
+      checkAnyNeighbor(board, cell.q, cell.r, (n) => getTop(n) === "WATER"),
   },
   CAT: {
     id: "CAT",
     name: "Cat",
     desc: "Building next to 2 Fields",
-    points: [4, 4], // Buffed
+    points: [5, 6],
     slots: 2,
     icon: Cat,
-    iconColor: "text-slate-300",
+    iconColor: "text-yellow-600",
     visual: {
       type: "adj",
       main: ["BRICK", "BRICK"],
@@ -702,7 +795,7 @@ const ANIMALS = {
       let count = 0;
       getNeighbors(cell.q, cell.r).forEach((n) => {
         const neighbor = board[`${n.q},${n.r}`];
-        if (neighbor && neighbor.stack[0] === "SAND") count++;
+        if (getTop(neighbor) === "SAND") count++;
       });
       return count >= 2;
     },
@@ -711,7 +804,7 @@ const ANIMALS = {
     id: "OWL",
     name: "Owl",
     desc: "Tall Tree (2 Log+Leaf) next to Building",
-    points: [5, 5],
+    points: [6, 7],
     slots: 2,
     icon: Eye,
     iconColor: "text-indigo-400",
@@ -728,7 +821,7 @@ const ANIMALS = {
     id: "SPIDER",
     name: "Spider",
     desc: "Dead Tree (3 Log) next to Building",
-    points: [5, 5],
+    points: [6, 6],
     slots: 2,
     icon: Snowflake,
     iconColor: "text-red-900",
@@ -748,9 +841,9 @@ const ANIMALS = {
     id: "CATERPILLAR",
     name: "Caterpillar",
     desc: "Line: Leaf -> Leaf -> Leaf",
-    points: [2, 2, 3],
+    points: [3, 3, 3],
     slots: 3,
-    icon: Bug,
+    icon: Worm,
     iconColor: "text-lime-600",
     visual: { type: "line", sequence: [["LEAF"], ["LEAF"], ["LEAF"]] },
     check: (cell, board) => {
@@ -767,14 +860,14 @@ const ANIMALS = {
     desc: "Line: Bush -> Bush -> Stone",
     points: [3, 4],
     slots: 2,
-    icon: Waves,
+    icon: Worm,
     iconColor: "text-emerald-500",
     visual: { type: "line", sequence: [["LEAF"], ["LEAF"], ["STONE"]] },
     check: (cell, board) => {
       if (!checkStack(cell, ["LEAF"])) return false;
       return checkLine(board, cell.q, cell.r, [
         (n) => checkStack(n, ["LEAF"]),
-        (n) => n.stack[0] === "STONE",
+        (n) => getTop(n) === "STONE",
       ]);
     },
   },
@@ -784,14 +877,14 @@ const ANIMALS = {
     desc: "Line: Sand -> Sand -> Stone",
     points: [3, 4],
     slots: 2,
-    icon: PawPrint,
+    icon: Flame,
     iconColor: "text-amber-400",
     visual: { type: "line", sequence: [["SAND"], ["SAND"], ["STONE"]] },
     check: (cell, board) => {
-      if (cell.stack[0] !== "SAND") return false;
+      if (getTop(cell) !== "SAND") return false;
       return checkLine(board, cell.q, cell.r, [
-        (n) => n.stack[0] === "SAND",
-        (n) => n.stack[0] === "STONE",
+        (n) => getTop(n) === "SAND",
+        (n) => getTop(n) === "STONE",
       ]);
     },
   },
@@ -801,14 +894,14 @@ const ANIMALS = {
     desc: "Line: Stone -> Stone -> Field",
     points: [3, 4],
     slots: 2,
-    icon: Crown,
-    iconColor: "text-stone-500",
+    icon: Cone,
+    iconColor: "text-stone-400",
     visual: { type: "line", sequence: [["STONE"], ["STONE"], ["SAND"]] },
     check: (cell, board) => {
-      if (cell.stack[0] !== "STONE") return false;
+      if (getTop(cell) !== "STONE") return false;
       return checkLine(board, cell.q, cell.r, [
-        (n) => n.stack[0] === "STONE",
-        (n) => n.stack[0] === "SAND",
+        (n) => getTop(n) === "STONE",
+        (n) => getTop(n) === "SAND",
       ]);
     },
   },
@@ -818,13 +911,13 @@ const ANIMALS = {
     desc: "Line: Water -> Water -> Leaf",
     points: [3, 4],
     slots: 2,
-    icon: Feather,
+    icon: Origami,
     iconColor: "text-pink-400",
     visual: { type: "line", sequence: [["WATER"], ["WATER"], ["LEAF"]] },
     check: (cell, board) => {
-      if (cell.stack[0] !== "WATER") return false;
+      if (getTop(cell) !== "WATER") return false;
       return checkLine(board, cell.q, cell.r, [
-        (n) => n.stack[0] === "WATER",
+        (n) => getTop(n) === "WATER",
         (n) => checkStack(n, ["LEAF"]),
       ]);
     },
@@ -839,10 +932,10 @@ const ANIMALS = {
     iconColor: "text-red-400",
     visual: { type: "line", sequence: [["WATER"], ["WOOD"], ["WATER"]] },
     check: (cell, board) => {
-      if (cell.stack[0] !== "WATER") return false;
+      if (getTop(cell) !== "WATER") return false;
       return checkLine(board, cell.q, cell.r, [
         (n) => checkStack(n, ["WOOD"]),
-        (n) => n.stack[0] === "WATER",
+        (n) => getTop(n) === "WATER",
       ]);
     },
   },
@@ -850,29 +943,29 @@ const ANIMALS = {
     id: "OCTOPUS",
     name: "Octopus",
     desc: "Line: Water -> Stone -> Water",
-    points: [3, 3], // Nerfed slightly
+    points: [3, 3],
     slots: 2,
     icon: Snowflake,
     iconColor: "text-indigo-600",
     visual: { type: "line", sequence: [["WATER"], ["STONE"], ["WATER"]] },
     check: (cell, board) => {
-      if (cell.stack[0] !== "WATER") return false;
+      if (getTop(cell) !== "WATER") return false;
       return checkLine(board, cell.q, cell.r, [
-        (n) => n.stack[0] === "STONE",
-        (n) => n.stack[0] === "WATER",
+        (n) => getTop(n) === "STONE",
+        (n) => getTop(n) === "WATER",
       ]);
     },
   },
 
-  // --- TIER 6: LINEAR & STACKS (Expert) ---
+  // --- TIER 6: EXPERT LINEAR (Expert) ---
 
   MONKEY: {
     id: "MONKEY",
     name: "Monkey",
     desc: "Line: Small Tree -> Tall Tree",
-    points: [4, 5],
+    points: [5, 6],
     slots: 2,
-    icon: PawPrint,
+    icon: Squirrel,
     iconColor: "text-amber-500",
     visual: {
       type: "line",
@@ -892,9 +985,9 @@ const ANIMALS = {
     id: "COUGAR",
     name: "Cougar",
     desc: "Line: Medium Rock -> High Peak",
-    points: [4, 5],
+    points: [5, 6],
     slots: 2,
-    icon: Flame,
+    icon: Cat,
     iconColor: "text-red-600",
     visual: {
       type: "line",
@@ -914,9 +1007,9 @@ const ANIMALS = {
     id: "KINGFISHER",
     name: "Kingfisher",
     desc: "Line: Tree -> Water -> Tree",
-    points: [4, 4],
+    points: [5, 5],
     slots: 2,
-    icon: Feather,
+    icon: Bird,
     iconColor: "text-cyan-500",
     visual: {
       type: "line",
@@ -925,7 +1018,7 @@ const ANIMALS = {
     check: (cell, board) => {
       if (!checkStack(cell, ["WOOD", "LEAF"])) return false;
       return checkLine(board, cell.q, cell.r, [
-        (n) => n.stack[0] === "WATER",
+        (n) => getTop(n) === "WATER",
         (n) => checkStack(n, ["WOOD", "LEAF"]),
       ]);
     },
@@ -936,14 +1029,14 @@ const ANIMALS = {
     desc: "Line: Field -> Tree -> Water",
     points: [4, 5],
     slots: 2,
-    icon: Anchor,
-    iconColor: "text-slate-600",
+    icon: ChessBishop,
+    iconColor: "text-pink-400",
     visual: { type: "line", sequence: [["SAND"], ["WOOD", "LEAF"], ["WATER"]] },
     check: (cell, board) => {
-      if (cell.stack[0] !== "SAND") return false;
+      if (getTop(cell) !== "SAND") return false;
       return checkLine(board, cell.q, cell.r, [
         (n) => checkStack(n, ["WOOD", "LEAF"]),
-        (n) => n.stack[0] === "WATER",
+        (n) => getTop(n) === "WATER",
       ]);
     },
   },
@@ -971,9 +1064,9 @@ const ANIMALS = {
     id: "TIGER",
     name: "Tiger",
     desc: "Line: Bush -> Tall Tree -> Bush",
-    points: [4, 4],
+    points: [5, 5],
     slots: 2,
-    icon: Flame,
+    icon: Cat,
     iconColor: "text-orange-500",
     visual: {
       type: "line",
@@ -991,9 +1084,9 @@ const ANIMALS = {
     id: "PEACOCK",
     name: "Peacock",
     desc: "Line: Tree -> Building -> Tree",
-    points: [5, 6],
+    points: [6, 7],
     slots: 2,
-    icon: Flower,
+    icon: Feather,
     iconColor: "text-purple-500",
     visual: {
       type: "line",
@@ -1015,10 +1108,10 @@ const ANIMALS = {
     id: "GOAT",
     name: "Goat",
     desc: "High Peak (3 Stone) next to another Stone",
-    points: [4, 4],
+    points: [4, 5],
     slots: 2,
-    icon: Mountain,
-    iconColor: "text-gray-400",
+    icon: Crown,
+    iconColor: "text-orange-400",
     visual: {
       type: "adj",
       main: ["STONE", "STONE", "STONE"],
@@ -1026,7 +1119,31 @@ const ANIMALS = {
     },
     check: (cell, board) =>
       checkStack(cell, ["STONE", "STONE", "STONE"]) &&
-      checkAnyNeighbor(board, cell.q, cell.r, (n) => n.stack[0] === "STONE"),
+      checkAnyNeighbor(board, cell.q, cell.r, (n) => getTop(n) === "STONE"),
+  },
+  HORSE: {
+    id: "HORSE",
+    name: "Horse",
+    desc: "Field next to Field AND Tall Tree (2 Log+Leaf)",
+    points: [4, 5, 5],
+    slots: 3,
+    icon: ChessKnight,
+    iconColor: "text-red-400",
+    visual: {
+      type: "adj",
+      main: ["SAND"],
+      others: [["SAND"], ["WOOD", "WOOD", "LEAF"]],
+    },
+    check: (cell, board) => {
+      if (getTop(cell) !== "SAND") return false;
+      const neighbors = getNeighbors(cell.q, cell.r).map(
+        (n) => board[`${n.q},${n.r}`],
+      );
+      return (
+        neighbors.some((n) => getTop(n) === "SAND") &&
+        neighbors.some((n) => n && checkStack(n, ["WOOD", "WOOD", "LEAF"]))
+      );
+    },
   },
 };
 
@@ -1335,22 +1452,24 @@ const PatternPreview = ({ visual }) => {
 
   // 1. Vertical Stack Preview
   if (visual.type === "stack") {
-    return <TokenStackVisual tokens={visual.tokens} />;
+    return <TokenStackVisual tokens={visual.tokens} spacing={5} />;
   }
 
   // 2. Adjacency Preview (Cluster)
   if (visual.type === "adj") {
     return (
-      <div className="flex items-end justify-center gap-2 py-2">
+      // CHANGED: Removed 'py-2' to save vertical space
+      <div className="flex items-end justify-center gap-2">
         {/* Main Center Token */}
         <div className="relative z-10 border-2 border-white/50 rounded-xl p-1 bg-black/20">
           <TokenStackVisual
             tokens={Array.isArray(visual.main) ? visual.main : [visual.main]}
             scale={0.9}
+            spacing={5} // CHANGED: Tighter spacing
           />
           {/* Center Indicator Dot */}
-          <div className="absolute -top-2 -right-2 w-4 h-4 bg-white rounded-full flex items-center justify-center border border-slate-500 shadow">
-            <div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div>
+          <div className="absolute -top-2 -right-2 w-3 h-3 bg-white rounded-full flex items-center justify-center border border-slate-500 shadow">
+            <div className="w-1 h-1 bg-slate-900 rounded-full"></div>
           </div>
         </div>
 
@@ -1361,6 +1480,7 @@ const PatternPreview = ({ visual }) => {
               <TokenStackVisual
                 tokens={Array.isArray(tArr) ? tArr : [tArr]}
                 scale={0.8}
+                spacing={5} // CHANGED: Tighter spacing
               />
             </div>
           ))}
@@ -1369,13 +1489,13 @@ const PatternPreview = ({ visual }) => {
     );
   }
 
-  // 3. --- NEW: Linear Preview (A -> B -> C) ---
+  // 3. Linear Preview
   if (visual.type === "line") {
     return (
-      <div className="flex items-center justify-center gap-1 py-2">
+      // CHANGED: 'py-2' to 'py-4'
+      <div className="flex items-center justify-center gap-1 py-4">
         {visual.sequence.map((tokens, i) => (
           <React.Fragment key={i}>
-            {/* Arrow between items */}
             {i > 0 && (
               <div className="text-slate-500 opacity-50">
                 <SkipForward size={10} />
@@ -1385,7 +1505,6 @@ const PatternPreview = ({ visual }) => {
             <div
               className={`relative ${i === 0 ? "z-10 scale-100" : "opacity-80 scale-90"}`}
             >
-              {/* Highlight the start of the line */}
               {i === 0 && (
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full flex items-center justify-center border border-slate-500 shadow z-20">
                   <div className="w-1 h-1 bg-slate-900 rounded-full"></div>
@@ -1395,6 +1514,7 @@ const PatternPreview = ({ visual }) => {
               <TokenStackVisual
                 tokens={Array.isArray(tokens) ? tokens : [tokens]}
                 scale={0.7}
+                spacing={5} // CHANGED: Tighter spacing
               />
             </div>
           </React.Fragment>
@@ -1620,9 +1740,9 @@ const RulesModal = ({ onClose }) => (
                 Trees (Wood + Foliage)
               </strong>
               <ul className="list-disc pl-4 text-xs space-y-1">
+                <li>1 Leaf alone (Bush): 1 Pt</li>
                 <li>2 High (1 Log + 1 Leaf): 3 Pts</li>
                 <li>3 High (2 Log + 2 Leaf): 7 Pts</li>
-                <li>1 Leaf alone (Bush): 1 Pt</li>
               </ul>
             </div>
             <div className="bg-slate-800 p-4 rounded-xl border border-emerald-900/30">
@@ -1872,6 +1992,101 @@ export default function Equilibrium() {
   const [selectedHoldingIdx, setSelectedHoldingIdx] = useState(null);
   const [selectedAnimalIdx, setSelectedAnimalIdx] = useState(null);
   const lastLogIdRef = useRef(null);
+
+  // --- ZOOM FEATURE STATE ---
+  const [zoomCard, setZoomCard] = useState(null); // Stores the card data to show
+  const longPressTimerRef = useRef(null); // Stores the timer ID
+
+  const handleLongPressStart = (card) => {
+    // Clear any existing timer just in case
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+
+    // Start a timer: if held for 300ms, show the zoom
+    longPressTimerRef.current = setTimeout(() => {
+      setZoomCard(card);
+      // Optional: Vibrate on mobile for tactile feedback
+      //if (navigator.vibrate) navigator.vibrate(50);
+    }, 500);
+  };
+
+  const handleLongPressEnd = () => {
+    // Cancel the timer if the user releases early (it was just a click)
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = null;
+
+    // Hide the card
+    setZoomCard(null);
+  };
+
+  // 5. New: Cancel zoom if the user tries to scroll the list
+  const handleScrollCancel = () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = null;
+    // We don't hide the card here immediately to avoid flickering,
+    // strictly ensuring the timer never completes.
+  };
+
+  // --- ZOOM OVERLAY COMPONENT ---
+  const ZoomCardOverlay = () => {
+    if (!zoomCard) return null;
+
+    const def = ANIMALS[zoomCard.type];
+    if (!def) return null;
+
+    // Calculate progress if it's a card in hand, otherwise 0 for market
+    const slotsFilled = zoomCard.slotsFilled || 0;
+    const maxSlots = zoomCard.maxSlots || def.slots;
+    const isComplete = slotsFilled >= maxSlots;
+
+    return (
+      <div className="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="relative w-64 h-80 bg-slate-900 border-4 rounded-3xl flex flex-col shadow-2xl overflow-hidden scale-110 md:scale-125 transition-transform border-emerald-500/50">
+          {/* Header */}
+          <div className="flex justify-between items-center px-4 py-3 border-b border-white/10 bg-black/40">
+            <div className="flex items-center gap-2">
+              <def.icon size={24} className={def.iconColor} />
+              <span className="text-lg font-bold text-white tracking-wide">
+                {def.name}
+              </span>
+            </div>
+            <span className="text-xl font-black text-yellow-500 drop-shadow-md">
+              +{def.points.join("/")}
+            </span>
+          </div>
+
+          {/* Visual Body */}
+          <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-slate-800 to-slate-950 p-4">
+            {/* Reusing your PatternPreview but scaled up */}
+            <div className="scale-150 origin-center mb-6">
+              <PatternPreview visual={def.visual} />
+            </div>
+            <p className="text-center text-slate-300 text-sm font-medium px-4 leading-snug">
+              {def.desc}
+            </p>
+          </div>
+
+          {/* Footer / Progress */}
+          <div className="p-4 bg-black/20 border-t border-white/5">
+            <div className="flex gap-2 justify-center">
+              {Array.from({ length: maxSlots }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-3 w-full rounded-full border-2 ${
+                    i < slotsFilled
+                      ? "bg-emerald-500 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.6)]"
+                      : "bg-slate-800 border-slate-600"
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="text-center mt-2 text-xs text-slate-500 uppercase font-bold tracking-widest">
+              {isComplete ? "Completed" : "In Progress"}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // --- RESTORE SESSION ---
   useEffect(() => {
@@ -2246,22 +2461,51 @@ export default function Equilibrium() {
     setShowLeaveConfirm(false);
   };
 
+  // --- NEW: SHARED PALETTE STATE ---
+  const togglePalette = async (type) => {
+    // 1. Optimistic Local Update
+    const nextState = activePalette === type ? null : type;
+    setActivePalette(nextState);
+
+    // 2. Database Update (Fire & Forget)
+    if (!gameState || !user) return;
+
+    const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
+    if (pIdx === -1) return;
+
+    const players = [...gameState.players];
+    // Ensure we initialize the field if it doesn't exist
+    players[pIdx].activePalette = nextState;
+
+    try {
+      await updateDoc(
+        doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
+        { players },
+      );
+    } catch (e) {
+      console.error("Error syncing palette state:", e);
+    }
+  };
+
   const handleDraftToken = async (marketIdx) => {
     const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
     if (gameState.turnIndex !== pIdx) return;
     const players = [...gameState.players];
     const me = players[pIdx];
 
-    if (me.hasDraftedTokens) return; // Already took tokens
+    if (me.hasDraftedTokens) return;
 
     let market = [...gameState.market];
     let bag = [...gameState.bag];
+    let isLastRound = gameState.isLastRound;
+    let newLogs = []; // Temporary array for new logs
 
     me.holding = market[marketIdx].tokens;
     me.hasDraftedTokens = true;
+    me.activePalette = null; // <--- Clear status in DB
     market.splice(marketIdx, 1);
 
-    // IMMEDIATE REFILL
+    // REFILL LOGIC
     if (bag.length >= 3) {
       const newSlot = {
         id: Math.random().toString(36).substr(2, 9),
@@ -2269,6 +2513,29 @@ export default function Equilibrium() {
       };
       market.push(newSlot);
     }
+    // --- NEW LOGIC: BAG EMPTY TRIGGER ---
+    else if (!isLastRound) {
+      // If we can't refill (bag < 3) and it wasn't already the last round:
+      isLastRound = true;
+      newLogs.push({
+        text: "The Bag is empty! Finishing the round...",
+        type: "warning",
+        id: Date.now(),
+      });
+    }
+    // ------------------------------------
+
+    // Add the draft log
+    newLogs.push({
+      text: `${me.name} drafted tokens.`,
+      type: "neutral",
+      id: Date.now() + 1, // +1 to ensure unique ID if same ms
+    });
+
+    // Merge new logs with existing
+    const updatedLogs = gameState.logs
+      ? [...gameState.logs, ...newLogs]
+      : newLogs;
 
     await updateDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
@@ -2276,11 +2543,8 @@ export default function Equilibrium() {
         players,
         market,
         bag,
-        logs: arrayUnion({
-          text: `${me.name} drafted tokens.`,
-          type: "neutral",
-          id: Date.now(),
-        }),
+        isLastRound, // Save the flag
+        logs: updatedLogs,
       },
     );
     setActivePalette(null);
@@ -2307,6 +2571,7 @@ export default function Equilibrium() {
 
     me.animals.push({ ...card, slotsFilled: 0, maxSlots: def.slots });
     me.hasDraftedAnimal = true;
+    me.activePalette = null; // <--- Clear status in DB
     animalMarket.splice(animalIdx, 1);
 
     // IMMEDIATE REFILL
@@ -2459,54 +2724,58 @@ export default function Equilibrium() {
     const players = [...gameState.players];
     const me = players[pIdx];
 
-    // Validation: Must play all tokens and must have drafted
-    if (me.holding.length > 0) return;
-    if (!me.hasDraftedTokens) return;
+    // 1. Validation
+    if (me.holding.length > 0) {
+      setFeedback({
+        type: "warning",
+        message: "Place Tokens",
+        subtext: "You must place or discard all tokens.",
+      });
+      setTimeout(() => setFeedback(null), 2000);
+      return;
+    }
+
+    // Allow ending turn if market is empty, even if we didn't draft
+    if (!me.hasDraftedTokens && gameState.market.length > 0) {
+      setFeedback({
+        type: "warning",
+        message: "Draft Tokens",
+        subtext: "You must take tokens from the market.",
+      });
+      setTimeout(() => setFeedback(null), 2000);
+      return;
+    }
 
     me.hasDraftedTokens = false;
     me.hasDraftedAnimal = false;
 
-    // --- NEW LOGIC START ---
     const updates = { players };
     const nextIndex = (gameState.turnIndex + 1) % gameState.players.length;
-    let isLastRound = gameState.isLastRound;
 
-    // 1. CRITICAL CHECK: "Sudden Death" (Market Empty)
-    // If the bag AND market are empty, the game MUST end now.
-    // The next player cannot physically take a turn.
-    if (gameState.bag.length === 0 && gameState.market.length === 0) {
+    // 2. CHECK FOR GAME OVER
+    // Condition A: Sudden Death (Market is physically empty - cannot play)
+    if (gameState.market.length === 0 && gameState.bag.length === 0) {
       updates.status = "finished";
       updates.logs = arrayUnion({
-        text: "The Market is empty! Game Over immediately.",
+        text: "Market exhausted. Game Over!",
         type: "warning",
         id: Date.now(),
       });
     }
-    // 2. STANDARD CHECK: End of Round
-    // Only happens if someone filled their board earlier (setting isLastRound)
-    // AND we have circled back to the starting player.
-    else if (isLastRound && nextIndex === gameState.startPlayerIndex) {
+    // Condition B: Last Round Flag is TRUE and we reached the Start Player
+    else if (
+      gameState.isLastRound &&
+      nextIndex === gameState.startPlayerIndex
+    ) {
       updates.status = "finished";
       updates.logs = arrayUnion({
         text: "Round complete. Game Over!",
         type: "neutral",
-        id: Date.now() + 1,
+        id: Date.now(),
       });
     }
-    // 3. WARNING CHECK: Bag Empty
-    // The bag ran out, but there are still tokens in the market.
-    // We set 'isLastRound' so players finish this circle using the remaining tokens.
+    // 3. PASS TURN
     else {
-      if (gameState.bag.length === 0 && !isLastRound) {
-        updates.isLastRound = true; // Trigger the "Final Round" flag
-        updates.logs = arrayUnion({
-          text: "The Bag is empty! Finishing the round...",
-          type: "warning",
-          id: Date.now(),
-        });
-      }
-
-      // Pass turn normally
       updates.turnIndex = nextIndex;
       updates.logs = arrayUnion({
         text: `Turn passed to ${gameState.players[nextIndex].name}.`,
@@ -2514,7 +2783,6 @@ export default function Equilibrium() {
         id: Date.now(),
       });
     }
-    // --- NEW LOGIC END ---
 
     await updateDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
@@ -2601,7 +2869,7 @@ export default function Equilibrium() {
   if (!user)
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center text-emerald-500 animate-pulse">
-        Initializing Ecosystem...
+        Returning to the wild...
       </div>
     );
 
@@ -2614,8 +2882,8 @@ export default function Equilibrium() {
         <div className="bg-slate-900/80 backdrop-blur p-8 rounded-2xl border border-slate-700 shadow-2xl flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
           <Loader size={48} className="text-emerald-500 animate-spin" />
           <div className="text-center">
-            <h2 className="text-xl font-bold">Resuming Session...</h2>
-            <p className="text-slate-400 text-sm">Returning to the wild</p>
+            <h2 className="text-xl font-bold">Reconnecting...</h2>
+            <p className="text-slate-400 text-sm">Resuming your session</p>
           </div>
         </div>
       </div>
@@ -2805,28 +3073,30 @@ export default function Equilibrium() {
             )}
           </div>
           {/* --- HOST CONTROLS --- */}
-          {/* --- HOST CONTROLS (Updated for Solo Play) --- */}
+          {/* --- HOST CONTROLS (Solo Play Fixed) --- */}
           {isHost && (
             <div className="mt-8 flex flex-col items-center gap-2">
               <button
                 onClick={startGame}
-                // CHANGED: Allow starting with 1 player
+                // CHECK 1: Ensure this is < 1 (Controls clickability)
                 disabled={gameState.players.length < 1}
                 className={`
                   px-8 py-3 rounded-xl font-bold text-lg shadow-lg transition-all
                   ${
+                    // CHECK 2: Ensure this is < 1 (Controls visual style)
                     gameState.players.length < 1
                       ? "bg-slate-700 text-slate-500 cursor-not-allowed"
                       : "bg-emerald-500 text-slate-900 hover:bg-emerald-400 hover:scale-105 hover:shadow-emerald-500/20"
                   }
                 `}
               >
+                {/* CHECK 3: Ensure this is < 1 (Controls the text you see) */}
                 {gameState.players.length < 1
                   ? "Waiting for Architects..."
                   : "CREATE WORLD"}
               </button>
 
-              {/* Only show warning if literally no one is there (which shouldn't happen for host) */}
+              {/* Helper Message */}
               {gameState.players.length < 1 && (
                 <p className="text-slate-600 text-xs uppercase tracking-widest font-bold">
                   Need 1+ player
@@ -2889,6 +3159,8 @@ export default function Equilibrium() {
     return (
       <div className="fixed inset-0 bg-slate-950 text-white flex flex-col overflow-hidden font-sans select-none">
         <GlobalStyles />
+        <FloatingBackground />
+        <ZoomCardOverlay />
         {feedback && (
           <FeedbackOverlay
             type={feedback.type}
@@ -3018,35 +3290,51 @@ export default function Equilibrium() {
           </div>
         )}
 
-        <div className="flex-1 relative bg-slate-950 overflow-hidden flex flex-col items-center justify-center">
+        <div className="flex-1 relative bg-transparent overflow-hidden flex flex-col items-center justify-center">
           {/* OPPONENT TABS */}
           <div className="absolute top-2 md:top-4 left-0 right-0 z-10 grid grid-cols-4 gap-1 px-2 w-full max-w-2xl mx-auto pointer-events-auto">
             {gameState.players.map((p, i) => {
-              // Check if it is this player's turn
               const isTurn = gameState.turnIndex === i;
-              // --- ADD THIS CALCULATION ---
               const totalScore =
                 (p.score || 0) +
                 (p.landscapeScore || 0) -
                 (p.penalties || 0) * 2;
-              // ---------------------------
 
               return (
                 <button
                   key={p.id}
                   onClick={() => setViewingPlayerId(p.id)}
-                  // ADDED: 'relative' and 'overflow-visible' so the badge can float outside
                   className={`
-                  relative overflow-visible
-                  flex flex-col items-center justify-center h-12 md:h-14 rounded-xl border-2 transition-all w-full
-                  ${
-                    viewingPlayerId === p.id
-                      ? "bg-slate-800 border-emerald-500 shadow-lg scale-105 z-10"
-                      : "bg-slate-900/80 border-slate-700 hover:bg-slate-800/80 text-slate-400"
-                  }
-                `}
+          relative overflow-visible
+          flex flex-col items-center justify-center h-12 md:h-14 rounded-xl border-2 transition-all w-full
+          ${
+            viewingPlayerId === p.id
+              ? "bg-slate-800 border-emerald-500 shadow-lg scale-105 z-10"
+              : "bg-slate-900/80 border-slate-700 hover:bg-slate-800/80 text-slate-400"
+          }
+        `}
                 >
-                  {/* --- NEW: PLAYING BADGE --- */}
+                  {/* --- NEW: LIVE ACTIVITY INDICATORS --- */}
+                  {/* If viewing Tokens: Cyan Circle */}
+                  {p.activePalette === "TOKENS" && (
+                    <div className="absolute -top-1 -right-1 bg-slate-900 rounded-full p-1 border border-cyan-500 shadow-lg z-20 animate-pulse">
+                      <Circle
+                        size={10}
+                        className="text-cyan-400 fill-cyan-400/20"
+                      />
+                    </div>
+                  )}
+                  {/* If viewing Animals: Orange Paw */}
+                  {p.activePalette === "ANIMALS" && (
+                    <div className="absolute -top-1 -right-1 bg-slate-900 rounded-full p-1 border border-orange-500 shadow-lg z-20 animate-pulse">
+                      <PawPrint
+                        size={10}
+                        className="text-orange-400 fill-orange-400/20"
+                      />
+                    </div>
+                  )}
+                  {/* ----------------------------------- */}
+
                   {isTurn && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
                       <div className="flex flex-col items-center animate-bounce-slight">
@@ -3054,7 +3342,6 @@ export default function Equilibrium() {
                           <span className="w-1.5 h-1.5 rounded-full bg-slate-900 animate-pulse" />
                           PLAYING
                         </div>
-                        {/* Triangle Pointer */}
                         <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-emerald-500 -mt-[1px]"></div>
                       </div>
                     </div>
@@ -3152,7 +3439,7 @@ export default function Equilibrium() {
                 </div>
 
                 <button
-                  onClick={() => setActivePalette(null)}
+                  onClick={() => togglePalette(activePalette)} // <--- UPDATED (Toggles it off)
                   className="flex items-center gap-1 px-2 py-0.5 bg-slate-800 hover:bg-slate-700 rounded-full text-slate-300 hover:text-white transition-colors border border-slate-600 font-bold text-[10px]"
                 >
                   <span>Close</span>
@@ -3215,18 +3502,46 @@ export default function Equilibrium() {
                         me.animals.filter((a) => a.slotsFilled < a.maxSlots)
                           .length < 4;
 
+                      // --- NEW: MARKET MATCH DETECTION ---
+                      // Check if the player already has a valid pattern on their board for this market card
+                      const hasPossibleMatch = Object.values(me.board).some(
+                        (cell) => {
+                          return !cell.animal && def.check(cell, me.board);
+                        },
+                      );
+                      // -----------------------------------
+
                       return (
                         <button
                           key={card.id}
                           onClick={() => handleDraftAnimal(idx)}
+                          // --- ADD THESE 4 LINES ---
+                          onMouseDown={() => handleLongPressStart(card)}
+                          onMouseUp={handleLongPressEnd}
+                          onMouseLeave={handleLongPressEnd}
+                          onTouchStart={() => handleLongPressStart(card)}
+                          onTouchEnd={handleLongPressEnd}
+                          onTouchMove={handleScrollCancel} // <--- Adds scroll safety
+                          // -------------------------
+
                           disabled={!canDraft}
-                          // CHANGED: Removed grayscale from the 'false' condition, set opacity-40
-                          className={`relative w-24 h-32 shrink-0 bg-slate-800 border-2 rounded-xl flex flex-col shadow-xl text-left overflow-hidden transition-all duration-300 group
-                        ${
-                          canDraft
-                            ? "border-slate-600 hover:border-orange-500 hover:-translate-y-1 hover:shadow-[0_5px_15px_rgba(249,115,22,0.2)]"
-                            : "opacity-60 cursor-not-allowed border-slate-800"
-                        }`}
+                          className={`
+          relative w-24 h-32 shrink-0 bg-slate-800 border-2 rounded-xl flex flex-col shadow-xl text-left overflow-hidden transition-all duration-300 group
+          ${
+            canDraft
+              ? "hover:-translate-y-1 cursor-pointer"
+              : "cursor-not-allowed"
+          }
+          ${
+            // --- UPDATED VISUAL LOGIC ---
+            // If match: Green Pulse (Even if disabled)
+            hasPossibleMatch
+              ? "border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.5)] animate-pulse z-10"
+              : canDraft
+                ? "border-slate-600 hover:border-orange-500 hover:shadow-[0_5px_15px_rgba(249,115,22,0.2)]"
+                : "border-slate-800 opacity-60" // Only dim if no match AND disabled
+          }
+        `}
                         >
                           {/* Card Header */}
                           <div className="flex justify-between items-center px-2 py-1 border-b border-white/5 bg-black/20 shrink-0 h-7">
@@ -3427,70 +3742,125 @@ export default function Equilibrium() {
         <div className="h-64 bg-transparent absolute bottom-0 left-0 right-0 z-40 px-2 pb-2 flex justify-between items-end pointer-events-none">
           <div className="flex gap-2 items-end w-full pointer-events-none">
             {/* --- BOTTOM LEFT: CONTROLS --- */}
-            {/* CHANGED: pointer-events-auto -> pointer-events-none (Wrapper shouldn't block) */}
-            <div className="flex flex-col gap-2 mb-1 shrink-0 z-50 pointer-events-none">
-              {/* HAND (Stacked above buttons) */}
-              {isMyTurn && me.holding.length > 0 && (
-                // CHANGED: Added pointer-events-auto to the visible UI box
-                <div className="bg-emerald-900/90 border border-cyan-500/30 px-2 py-2 rounded-xl shadow-2xl flex flex-col items-center gap-2 backdrop-blur-md animate-in slide-in-from-left-4 pointer-events-auto">
-                  <span className="text-[8px] font-bold text-cyan-400 uppercase tracking-widest">
-                    Placing
+            <div className="relative h-46 flex flex-col justify-end gap-2 mb-1 shrink-0 z-50 pointer-events-none items-start">
+              {/* 1. TURN STATUS INDICATOR (Absolute Top of h-44 container) */}
+              <div
+                className={`
+        absolute top-0 left-0
+        pointer-events-auto
+        px-3 py-1.5 rounded-full w-30 font-black text-[10px] uppercase tracking-widest shadow-lg backdrop-blur-md border animate-in slide-in-from-left-8
+    ${
+      isMyTurn
+        ? "bg-emerald-950/90 text-emerald-300 border-emerald-400"
+        : "bg-slate-800/90 text-slate-400 border-slate-600"
+    }
+  `}
+              >
+                <div className="flex items-center gap-2">
+                  {isMyTurn ? (
+                    <>
+                      <span className="w-2 h-2 rounded-full bg-emerald-200 animate-pulse" />
+                      YOUR TURN
+                    </>
+                  ) : (
+                    <>
+                      <span className="w-2 h-2 rounded-full bg-slate-500" />
+                      AWAIT TURN
+                    </>
+                  )}
+                </div>
+              </div>
+              {/* 1. TOKEN HAND (Dynamic: Shows ME or OPPONENT based on tab) */}
+              {viewingPlayer.holding.length > 0 && (
+                <div
+                  className={`
+      w-full px-2 py-2 rounded-xl shadow-2xl flex flex-col items-center gap-2 backdrop-blur-md animate-in slide-in-from-left-4 pointer-events-auto
+      ${
+        viewingPlayer.id === user.uid
+          ? "bg-slate-900/90 border border-emerald-500 opacity-90" // Active (My Hand)
+          : "bg-slate-900/90 border border-slate-600 opacity-90" // Passive (Opponent Hand)
+      }
+    `}
+                >
+                  <span
+                    className={`text-[8px] font-bold uppercase tracking-widest ${
+                      viewingPlayer.id === user.uid
+                        ? "text-emerald-400"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {viewingPlayer.id === user.uid ? "Placing" : "Holding"}
                   </span>
+
                   <div className="flex items-center gap-1">
-                    {me.holding.map((t, i) => {
+                    {viewingPlayer.holding.map((t, i) => {
                       const T = TOKEN_TYPES[t];
+                      const isMe = viewingPlayer.id === user.uid;
+
                       return (
                         <button
                           key={i}
+                          // Click Logic: Only allow selecting if it is MY hand
                           onClick={() => {
-                            if (!checkViewAndWarn()) return;
-                            setSelectedHoldingIdx(i);
-                            setSelectedAnimalIdx(null);
+                            if (isMe) {
+                              if (!checkViewAndWarn()) return;
+                              setSelectedHoldingIdx(i);
+                              setSelectedAnimalIdx(null);
+                            }
                           }}
-                          className={`w-10 h-10 rounded-full border-2 shadow-lg flex items-center justify-center transition-all active:scale-90 ${
-                            T.color
-                          } ${T.border} ${
-                            selectedHoldingIdx === i
-                              ? "ring-4 ring-white scale-110 z-10"
-                              : "opacity-80 hover:opacity-100 hover:scale-105"
-                          }`}
+                          // Visual Logic: My hand allows interaction, Opponent hand is static
+                          className={`
+                w-10 h-10 rounded-full border-2 shadow-lg flex items-center justify-center transition-all 
+                ${T.color} ${T.border}
+                ${
+                  isMe
+                    ? "active:scale-90 cursor-pointer hover:opacity-100 hover:scale-105"
+                    : "cursor-default opacity-100"
+                }
+                ${
+                  isMe && selectedHoldingIdx === i
+                    ? "ring-4 ring-white scale-110 z-10"
+                    : "opacity-90"
+                }
+              `}
                         >
                           <T.icon size={18} className="text-white/80" />
                         </button>
                       );
                     })}
-                    {selectedHoldingIdx !== null && (
-                      <button
-                        onClick={handleDiscard}
-                        className="w-8 h-8 rounded-full border-2 border-red-500 bg-red-900/50 flex items-center justify-center hover:bg-red-800 transition-colors"
-                        title="Discard Token (-2 pts)"
-                      >
-                        <Trash2 size={12} className="text-red-300" />
-                      </button>
-                    )}
+
+                    {/* Trash Can: Only visible if looking at MY hand */}
+                    {viewingPlayer.id === user.uid &&
+                      selectedHoldingIdx !== null && (
+                        <button
+                          onClick={handleDiscard}
+                          className="w-8 h-8 rounded-full border-2 border-red-500 bg-red-900/50 flex items-center justify-center hover:bg-red-800 transition-colors"
+                          title="Discard Token (-2 pts)"
+                        >
+                          <Trash2 size={12} className="text-red-300" />
+                        </button>
+                      )}
                   </div>
                 </div>
               )}
 
-              {/* END TURN BUTTON */}
+              {/* 2. END TURN BUTTON (Always visible if condition met, regardless of view) */}
               {canEndTurn && (
                 <button
                   onClick={handleEndTurn}
-                  // CHANGED: Added pointer-events-auto
-                  className="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg animate-bounce flex items-center justify-center gap-2 text-sm whitespace-nowrap pointer-events-auto"
+                  className="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 w-full rounded-xl shadow-lg flex items-center justify-center gap-2 text-sm whitespace-nowrap pointer-events-auto animate-bounce"
                 >
-                  End Turn <SkipForward size={16} />
+                  End Turn
                 </button>
               )}
 
-              {/* PALETTE BUTTONS */}
+              {/* 3. PALETTE BUTTONS (Always visible) */}
               <div className="flex gap-2">
                 <button
                   onClick={() => {
                     if (!checkViewAndWarn()) return;
-                    setActivePalette("TOKENS");
+                    togglePalette("TOKENS");
                   }}
-                  // CHANGED: Added pointer-events-auto
                   className={`w-14 h-14 rounded-full border-2 shadow-xl flex items-center justify-center transition-all active:scale-90 pointer-events-auto ${
                     isMyTurn && !me.hasDraftedTokens
                       ? "bg-cyan-600 border-cyan-400 text-white animate-bounce-subtle"
@@ -3502,9 +3872,8 @@ export default function Equilibrium() {
                 <button
                   onClick={() => {
                     if (!checkViewAndWarn()) return;
-                    setActivePalette("ANIMALS");
+                    togglePalette("ANIMALS");
                   }}
-                  // CHANGED: Added pointer-events-auto
                   className={`w-14 h-14 rounded-full border-2 shadow-xl flex items-center justify-center transition-all active:scale-90 pointer-events-auto ${
                     isMyTurn &&
                     !me.hasDraftedAnimal &&
@@ -3528,6 +3897,20 @@ export default function Equilibrium() {
                   i === selectedAnimalIdx && viewingPlayer.id === user.uid;
                 const isComplete = card.slotsFilled >= card.maxSlots;
 
+                // --- NEW: HAND MATCH DETECTION ---
+                // Decoupled from "isMyTurn".
+                // Shows hint if:
+                // 1. I am looking at my own hand (viewingPlayer.id === user.uid)
+                // 2. The card is not finished
+                // 3. A valid pattern exists on my board
+                const hasPossibleMatch =
+                  viewingPlayer.id === user.uid &&
+                  !isComplete &&
+                  Object.values(me.board).some((cell) => {
+                    return !cell.animal && def.check(cell, me.board);
+                  });
+                // ---------------------------------
+
                 return (
                   <button
                     key={card.id}
@@ -3539,12 +3922,34 @@ export default function Equilibrium() {
                       setSelectedHoldingIdx(null);
                       setSelectedAnimalIdx(isSelected ? null : i);
                     }}
+                    // --- ADD THESE 4 LINES ---
+                    onMouseDown={() => handleLongPressStart(card)}
+                    onMouseUp={handleLongPressEnd}
+                    onMouseLeave={handleLongPressEnd}
+                    onTouchStart={() => handleLongPressStart(card)}
+                    onTouchEnd={handleLongPressEnd}
+                    onTouchMove={handleScrollCancel} // <--- Adds scroll safety
+                    // -------------------------
                     // CHANGED: Added pointer-events-auto so the specific card is clickable
-                    className={`relative w-32 h-44 bg-slate-900/90 border-2 rounded-xl flex flex-col shadow-xl shrink-0 backdrop-blur-md transition-all duration-300 hover:-translate-y-4 text-left overflow-hidden pointer-events-auto ${
-                      isSelected
-                        ? "border-yellow-400 ring-2 ring-yellow-500/50 scale-105 z-10 -translate-y-2"
-                        : "border-slate-600 hover:border-slate-400"
-                    } ${isComplete ? "grayscale opacity-75" : ""}`}
+                    className={`
+          relative w-32 h-44 bg-slate-900/90 border-2 rounded-xl flex flex-col shadow-xl shrink-0 backdrop-blur-md transition-all duration-300 text-left overflow-hidden pointer-events-auto
+          ${
+            isSelected
+              ? "border-yellow-400 ring-2 ring-yellow-500/50 scale-105 z-10 -translate-y-6"
+              : "hover:-translate-y-4"
+          }
+          ${
+            // --- NEW: HIGHLIGHT LOGIC ---
+            // If match exists but not selected: Green Border + Glow + Pulse
+            // Works even if not your turn
+            hasPossibleMatch && !isSelected
+              ? "border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.4)] animate-pulse"
+              : !isSelected
+                ? "border-slate-600 hover:border-slate-400"
+                : ""
+          }
+          ${isComplete ? "grayscale opacity-75 border-slate-700" : ""}
+        `}
                   >
                     {/* Header */}
                     <div className="flex justify-between items-center p-2 border-b border-white/10 bg-black/20 h-10 shrink-0">
